@@ -227,7 +227,12 @@ impl HealthChecker {
             user_service: Arc::new(RwLock::new(ServiceHealth::default())),
             product_service: Arc::new(RwLock::new(ServiceHealth::default())),
             metrics: Arc::new(GatewayMetrics::default()),
-            rate_limiter: Arc::new(RateLimiter::new(1000)), // 1000 requests per minute per IP
+            rate_limiter: Arc::new(RateLimiter::new(
+                std::env::var("RATE_LIMIT_PER_MINUTE")
+                    .unwrap_or_else(|_| "1000".to_string())
+                    .parse()
+                    .unwrap_or(1000),
+            )), // Configurable rate limit per minute per IP
         }
     }
 
@@ -608,17 +613,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("  - Default: User Service (for backward compatibility)");
     info!("🔍 Health checks enabled - services monitored every 30 seconds");
 
-    loop {
-        let (stream, _) = listener.accept().await?;
-        let io = TokioIo::new(stream);
+    // Set up graceful shutdown handling
+    let shutdown_signal = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to listen for ctrl+c");
+        info!("Received shutdown signal, gracefully shutting down gateway...");
+    };
 
-        tokio::task::spawn(async move {
-            if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(handle_request))
-                .await
-            {
-                error!("Error serving connection: {:?}", err);
+    // Run the server with graceful shutdown
+    tokio::select! {
+        _ = shutdown_signal => {
+            info!("Gateway shutdown signal received");
+        }
+        _ = async {
+            loop {
+                let (stream, _) = listener.accept().await?;
+                let io = TokioIo::new(stream);
+
+                tokio::task::spawn(async move {
+                    if let Err(err) = http1::Builder::new()
+                        .serve_connection(io, service_fn(handle_request))
+                        .await
+                    {
+                        error!("Error serving connection: {:?}", err);
+                    }
+                });
             }
-        });
+            #[allow(unreachable_code)]
+            Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+        } => {
+            error!("Gateway server unexpectedly stopped");
+        }
     }
+
+    info!("Gateway shut down gracefully");
+    Ok(())
 }

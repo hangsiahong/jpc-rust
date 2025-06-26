@@ -183,8 +183,19 @@ async fn main() -> anyhow::Result<()> {
     info!("  - update_product_stock(id: String, quantity: i32)");
     info!("  - health()");
 
+    // Set up graceful shutdown handling
+    let handle_clone = handle.clone();
+    tokio::spawn(async move {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to listen for ctrl+c");
+        info!("Received shutdown signal, gracefully shutting down...");
+        handle_clone.stop().unwrap();
+    });
+
     // Wait for the server to finish
     handle.stopped().await;
+    info!("Product Service shut down gracefully");
 
     Ok(())
 }

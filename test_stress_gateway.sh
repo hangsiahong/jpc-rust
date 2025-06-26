@@ -8,13 +8,27 @@ echo "🚀 Advanced Production Gateway Stress Testing"
 echo "============================================"
 echo ""
 
+# Stop any existing gateway and restart with low rate limit for testing
+echo "🔄 Restarting gateway with test rate limit (10 requests/minute)..."
+pkill -f gateway || echo "Gateway not running"
+sleep 2
+
+# Set environment variable for testing and start gateway in background
+export RATE_LIMIT_PER_MINUTE=10
+nohup cargo run --bin gateway > /dev/null 2>&1 &
+GATEWAY_PID=$!
+sleep 3
+
+echo "Gateway started with PID $GATEWAY_PID (rate limit: 10 req/min)"
+echo ""
+
 # Test 1: Rate limiting stress test
 echo "🚦 1. Rate Limiting Stress Test (exceeding limits)..."
-echo "Making 50 rapid requests to trigger rate limiting..."
+echo "Making 20 rapid requests to trigger rate limiting..."
 success_count=0
 rate_limited_count=0
 
-for i in {1..50}; do
+for i in {1..20}; do
   response=$(curl -s -w "%{http_code}" -X POST "$GATEWAY_URL" \
     -H "Content-Type: application/json" \
     -d '{
@@ -31,7 +45,7 @@ for i in {1..50}; do
   fi
   
   # Small delay to not overwhelm
-  sleep 0.01
+  sleep 0.1
 done
 
 echo "Results: $success_count successful, $rate_limited_count rate-limited"
@@ -82,10 +96,23 @@ echo ""
 # Test 5: Memory and performance check
 echo "🎯 5. Performance Insights..."
 echo "Gateway handled:"
-echo "  - Rate limiting stress test (50 requests)"
+echo "  - Rate limiting stress test (20 requests with 10/min limit)"
 echo "  - Service failure scenarios"
 echo "  - Concurrent request bursts (20 simultaneous)"
 echo "  - Continuous metrics collection"
+echo ""
+
+echo "🔄 Cleaning up and restarting gateway with normal settings..."
+# Kill the test gateway
+kill $GATEWAY_PID 2>/dev/null || echo "Gateway already stopped"
+sleep 2
+
+# Restart with normal rate limit
+unset RATE_LIMIT_PER_MINUTE
+nohup cargo run --bin gateway > /dev/null 2>&1 &
+sleep 3
+
+echo "✅ Gateway restarted with normal rate limit (1000 req/min)"
 echo ""
 
 echo "✅ Advanced Stress Testing Complete!"
