@@ -1,4 +1,4 @@
-use crate::{errors::UserServiceError, models::User};
+use crate::{errors::user_error::UserServiceError, models::user_model::User};
 use surrealdb::{engine::local::Mem, Surreal};
 use tracing::{error, info};
 

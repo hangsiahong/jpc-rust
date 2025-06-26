@@ -1,7 +1,9 @@
 use jpc_rust::{
-    errors::UserServiceError,
-    models::{CreateUserRequest, CreateUserResponse, GetUserRequest, ListUsersResponse, User},
-    service::UserService,
+    errors::user_error::UserServiceError,
+    models::user_model::{
+        CreateUserRequest, CreateUserResponse, GetUserRequest, ListUsersResponse, User,
+    },
+    services::user_service::UserService,
 };
 use jsonrpsee::{
     core::{async_trait, RpcResult},

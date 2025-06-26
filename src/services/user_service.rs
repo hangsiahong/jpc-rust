@@ -1,7 +1,9 @@
 use crate::{
-    errors::UserServiceError,
-    models::{CreateUserRequest, CreateUserResponse, GetUserRequest, ListUsersResponse, User},
-    repository::UserRepository,
+    errors::user_error::UserServiceError,
+    models::user_model::{
+        CreateUserRequest, CreateUserResponse, GetUserRequest, ListUsersResponse, User,
+    },
+    repositories::user_repository::UserRepository,
 };
 use tracing::info;
 
