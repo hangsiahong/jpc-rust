@@ -1,0 +1,31 @@
+# Multi-stage build for Gateway
+FROM rust:1.75 as builder
+
+WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+COPY src/ ./src/
+
+# Build the gateway binary
+RUN cargo build --release --bin gateway
+
+# Runtime stage
+FROM debian:bookworm-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy the binary
+COPY --from=builder /app/target/release/gateway /usr/local/bin/gateway
+
+# Create a non-root user
+RUN useradd -r -s /bin/false appuser
+USER appuser
+
+EXPOSE 8081
+
+CMD ["gateway"]

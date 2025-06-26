@@ -1,0 +1,50 @@
+[package]
+name = "jpc-rust"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "user-service"
+path = "src/bin/user_service.rs"
+
+[[bin]]
+name = "gateway"
+path = "src/bin/gateway.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# JSON-RPC server
+jsonrpsee = { version = "0.23", features = ["server", "client", "macros"] }
+
+# Database - use a compatible version
+surrealdb = { version = "1.5", features = ["kv-mem"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# HTTP client - for simple gateway instead of Pingora
+hyper = { version = "1.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+http-body-util = "0.1"
+bytes = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Config management
+config = "0.14"
+
+# Additional utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tokio-test = "0.4"

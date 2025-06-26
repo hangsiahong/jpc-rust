@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # SurrealDB (currently using in-memory, but can be configured for persistence)
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: surrealdb
+    ports:
+      - "8000:8000"
+    command:
+      - start
+      - --log=info
+      - --user=root
+      - --pass=root
+      - memory
+    networks:
+      - user-service-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # User Service (JSON-RPC API)
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.user-service
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - DATABASE_URL=http://surrealdb:8000
+    networks:
+      - user-service-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Pingora Gateway
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: gateway
+    ports:
+      - "8081:8081"
+    depends_on:
+      user-service:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+    networks:
+      - user-service-network
+
+networks:
+  user-service-network:
+    driver: bridge
+
+volumes:
+  surrealdb-data:
