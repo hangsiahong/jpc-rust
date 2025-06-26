@@ -1,0 +1,31 @@
+# Use the official Rust image as a parent image
+FROM rust:1.75 as builder
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Copy the Cargo.toml and Cargo.lock files
+COPY Cargo.toml Cargo.lock ./
+
+# Copy the source code
+COPY src ./src
+
+# Build the product service
+RUN cargo build --release --bin product-service
+
+# Use a smaller base image for the final stage
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the binary from the builder stage
+COPY --from=builder /usr/src/app/target/release/product-service /usr/local/bin/product-service
+
+# Expose the port that the application will run on
+EXPOSE 8081
+
+# Set the startup command to run the binary
+CMD ["product-service"]

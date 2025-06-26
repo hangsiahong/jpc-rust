@@ -43,16 +43,40 @@ services:
       timeout: 10s
       retries: 3
 
-  # Pingora Gateway
+  # Product Service (JSON-RPC API)
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.product-service
+    container_name: product-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=info
+      - DATABASE_URL=http://surrealdb:8000
+    networks:
+      - user-service-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Gateway
   gateway:
     build:
       context: .
       dockerfile: Dockerfile.gateway
     container_name: gateway
     ports:
-      - "8081:8081"
+      - "8082:8082"
     depends_on:
       user-service:
+        condition: service_healthy
+      product-service:
         condition: service_healthy
     environment:
       - RUST_LOG=info

@@ -2,7 +2,7 @@
 
 # Test scripts for the User Service API
 
-BASE_URL="http://localhost:8081"
+BASE_URL="http://localhost:8082"
 
 echo "🧪 Testing User Service API through Pingora Gateway"
 echo "=================================================="

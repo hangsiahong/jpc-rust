@@ -30,7 +30,10 @@ run-local:
 	@echo "Starting User Service on port 8080..."
 	cargo run --bin user-service &
 	@sleep 2
-	@echo "Starting Gateway on port 8081..."
+	@echo "Starting Product Service on port 8081..."
+	cargo run --bin product-service &
+	@sleep 2
+	@echo "Starting Gateway on port 8082..."
 	cargo run --bin gateway &
 	@echo ""
 	@echo "✅ Services started! Test with: make test-api"

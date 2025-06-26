@@ -8,6 +8,10 @@ name = "user-service"
 path = "src/bin/user_service.rs"
 
 [[bin]]
+name = "product-service"
+path = "src/bin/product_service.rs"
+
+[[bin]]
 name = "gateway"
 path = "src/bin/gateway.rs"
 
