@@ -35,7 +35,11 @@ impl ProductRepository {
 
         // Create the product - let SurrealDB generate the ID
         let product_for_creation = product.for_creation();
-        let created: Vec<Product> = self.db.create("product").content(product_for_creation).await?;
+        let created: Vec<Product> = self
+            .db
+            .create("product")
+            .content(product_for_creation)
+            .await?;
 
         match created.into_iter().next() {
             Some(product) => {
@@ -74,7 +78,10 @@ impl ProductRepository {
         Ok(products)
     }
 
-    pub async fn get_products_by_category(&self, category: &str) -> Result<Vec<Product>, ProductServiceError> {
+    pub async fn get_products_by_category(
+        &self,
+        category: &str,
+    ) -> Result<Vec<Product>, ProductServiceError> {
         let products: Vec<Product> = self
             .db
             .query("SELECT * FROM product WHERE category = $category ORDER BY name")
@@ -82,13 +89,21 @@ impl ProductRepository {
             .await?
             .take(0)?;
 
-        info!("Retrieved {} products in category '{}'", products.len(), category);
+        info!(
+            "Retrieved {} products in category '{}'",
+            products.len(),
+            category
+        );
         Ok(products)
     }
 
-    pub async fn update_product_stock(&self, id: &str, new_quantity: i32) -> Result<Product, ProductServiceError> {
+    pub async fn update_product_stock(
+        &self,
+        id: &str,
+        new_quantity: i32,
+    ) -> Result<Product, ProductServiceError> {
         // First get the current product
-        let product = self.get_product(id).await?;
+        let _product = self.get_product(id).await?;
 
         // Update the stock quantity
         let updated: Vec<Product> = self
@@ -101,7 +116,10 @@ impl ProductRepository {
 
         match updated.into_iter().next() {
             Some(product) => {
-                info!("Updated stock for product {}: new quantity = {}", id, new_quantity);
+                info!(
+                    "Updated stock for product {}: new quantity = {}",
+                    id, new_quantity
+                );
                 Ok(product)
             }
             None => {
@@ -113,7 +131,10 @@ impl ProductRepository {
         }
     }
 
-    pub async fn get_product_by_name(&self, name: &str) -> Result<Option<Product>, ProductServiceError> {
+    pub async fn get_product_by_name(
+        &self,
+        name: &str,
+    ) -> Result<Option<Product>, ProductServiceError> {
         let products: Vec<Product> = self
             .db
             .query("SELECT * FROM product WHERE name = $name")
